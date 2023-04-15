@@ -19,6 +19,11 @@ using namespace std;
 // GLFW
 #include <GLFW/glfw3.h>
 
+// GLM
+#include <glm/glm.hpp> 
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include "Shader.h"
 
 // Protótipo da função de callback de teclado
@@ -81,10 +86,22 @@ int main()
 	// Gerando um buffer simples, com a geometria de um triângulo
 	GLuint VAO = setupGeometry();
 	glUseProgram(shader.ID);
-		
+
+	glm::mat4 projection = glm::ortho(-10.0, 10.0, -10.0, 10.0, -1.0, 1.0);
+	//glm::mat4 projection = glm::ortho(-10.0, 10.0, -10.0, 10.0, -1.0, 1.0);//Exercício 1
+	//glm::mat4 projection = glm::ortho(0.0, 800.0, 600.0, 0.0, -1.0, 1.0);//Exercício 2
+	
+	GLint projLoc = glGetUniformLocation(shader.ID, "projection");
+	glUniformMatrix4fv(projLoc, 1, FALSE, glm::value_ptr(projection));
+
 	// Loop da aplicação - "game loop"
 	while (!glfwWindowShouldClose(window))
 	{
+		// Definindo as dimensões da viewport com as mesmas dimensões da janela da aplicação
+		int width, height;
+		glfwGetFramebufferSize(window, &width, &height);
+		glViewport(0, 0, width, height);
+
 		// Checa se houveram eventos de input (key pressed, mouse moved etc.) e chama as funções de callback correspondentes
 		glfwPollEvents();
 
