@@ -7,6 +7,10 @@
 
 #include "Shader.h"
 
+struct AABB {
+	glm::vec2 pmin, pmax;
+};
+
 class Sprite
 {
 public:
@@ -19,6 +23,7 @@ public:
 	void moveRight();
 	void moveLeft();
 	void stop();
+	AABB getAABB();
 	float vel;
 protected:
 	GLuint VAO; //identificador do buffer de geometria Vertex Array Object

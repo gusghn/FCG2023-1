@@ -142,3 +142,16 @@ void Sprite::stop()
 {
 	pos = 0;
 }
+
+AABB Sprite::getAABB()
+{
+	AABB pontos;
+
+	pontos.pmin.x = position.x - sprDimensions.x / 2;
+	pontos.pmin.y = position.y - sprDimensions.y / 2;
+
+	pontos.pmax.x = position.x + sprDimensions.x / 2;
+	pontos.pmax.y = position.y + sprDimensions.y / 2;
+
+	return pontos;
+}

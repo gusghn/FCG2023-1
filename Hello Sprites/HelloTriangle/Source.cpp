@@ -29,6 +29,7 @@ using namespace std;
 #include "stb_image.h"
 #include "Sprite.h"
 #include "Timer.h"
+#include "Meteor.h"
 
 
 // Protótipo da função de callback de teclado
@@ -38,6 +39,7 @@ void mouse_callback(GLFWwindow* window, double mouse_x, double mouse_y);
 // Protótipos das funções
 int setupGeometry();
 int setupTexture(string texName, int& width, int& height);
+bool testCollision(Sprite& a, Sprite& b);
 
 // Dimensões da janela (pode ser alterado em tempo de execução)
 const GLuint WIDTH = 800, HEIGHT = 600;
@@ -48,6 +50,8 @@ Sprite dino;
 // Função MAIN
 int main()
 {
+	srand(glfwGetTime());
+
 	// Inicialização da GLFW
 	glfwInit();
 
@@ -103,8 +107,9 @@ int main()
 	background.initialize(texID, glm::vec2(texWidth*0.25, texHeight*0.25),&shader);
 
 	texID = setupTexture("../../Textures/flaming_meteor.png", texWidth, texHeight);
-	Sprite meteor;
-	meteor.initialize(texID, glm::vec2(texWidth*1.25, texHeight * 1.25), &shader);
+	Meteor meteor;
+	meteor.initialize(texID, glm::vec2(texWidth * 2, texHeight * 2), &shader, 1, 1, glm::vec3(400.0, 620.0, 0.0));
+	meteor.vel = 10.0;
 
 	texID = setupTexture("../../Textures/dinoanda.png", texWidth, texHeight);
 	dino.initialize(texID, glm::vec2(texWidth*2, texHeight*2), &shader,1, 5, glm::vec3(100.0,150.0,0.0));
@@ -153,6 +158,9 @@ int main()
 		dino.update();
 		dino.draw();
 
+		if (testCollision(meteor, dino))
+			glfwSetWindowShouldClose(window, GL_TRUE);
+				
 		timer.finish();
 		timer.sleepFps(dino.vel);
 
@@ -294,5 +302,17 @@ int setupTexture(string texName, int& width, int& height)
 	}
 
 	return texID;
+}
+
+bool testCollision(Sprite& a, Sprite& b)
+{
+	AABB pA = a.getAABB();
+	AABB pB = b.getAABB();
+		
+	return ((pA.pmin.y <= pB.pmax.y)
+			&&
+			((pA.pmax.x - pB.pmin.x) > 268)
+			&&
+			((pA.pmax.x - pB.pmin.x) < 390));
 }
 
