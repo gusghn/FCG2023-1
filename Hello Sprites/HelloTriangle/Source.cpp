@@ -111,8 +111,8 @@ int main()
 	meteor.initialize(texID, glm::vec2(texWidth * 2, texHeight * 2), &shader, 1, 1, glm::vec3(400.0, 620.0, 0.0));
 	meteor.vel = 10.0;
 
-	texID = setupTexture("../../Textures/dinoanda.png", texWidth, texHeight);
-	dino.initialize(texID, glm::vec2(texWidth*2, texHeight*2), &shader,1, 5, glm::vec3(100.0,150.0,0.0));
+	texID = setupTexture("../../Textures/fox.png", texWidth, texHeight);
+	dino.initialize(texID, glm::vec2(texWidth*2, texHeight*2), &shader,1, 10, glm::vec3(100.0,150.0,0.0));
 
 
 	glUseProgram(shader.ID);
@@ -308,11 +308,11 @@ bool testCollision(Sprite& a, Sprite& b)
 {
 	AABB pA = a.getAABB();
 	AABB pB = b.getAABB();
-		
+	
 	return ((pA.pmin.y <= pB.pmax.y)
 			&&
-			((pA.pmax.x - pB.pmin.x) > 268)
+			((pA.pmax.x - pB.pmin.x) > 480)
 			&&
-			((pA.pmax.x - pB.pmin.x) < 390));
+			((pA.pmax.x - pB.pmin.x) < 570));
 }
 

@@ -90,6 +90,9 @@ void Sprite::update()
 	if (pos) 
 	{
 		iFrame = (iFrame + 1) % nFrames;
+		
+		if (iFrame == 0)
+			iFrame = 1;
 
 		if (
 				((scale.s > 0) &&(pos < 0))
