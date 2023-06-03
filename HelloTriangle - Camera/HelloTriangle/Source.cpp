@@ -37,10 +37,20 @@ void mouse_callback(GLFWwindow* window, double mouse_x, double mouse_y);
 int setupGeometry();//Cria triângulo
 int setup3DGeometry();
 int setupTexture(string texName, int& width, int& height);
+void updateCameraPos(GLFWwindow* window);
 
 // Dimensões da janela (pode ser alterado em tempo de execução)
 const GLuint WIDTH = 800, HEIGHT = 600;
 
+//Variáveis de controle da câmera
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+//Variáveis globais para o controle da câmera
+bool firstMouse = true;
+float lastX = WIDTH / 2.0, lastY = HEIGHT / 2.0; //para calcular o quanto que o mouse deslocou
+float yaw = -90.0, pitch = 0.0; //rotação em x e y
 
 // Função MAIN
 int main()
@@ -68,7 +78,7 @@ int main()
 	// Fazendo o registro da função de callback para a janela GLFW
 	glfwSetKeyCallback(window, key_callback);
 	glfwSetCursorPosCallback(window, mouse_callback);
-
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	// GLAD: carrega todos os ponteiros d funções da OpenGL
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -102,16 +112,17 @@ int main()
 
 	//shader.setTexBuffer0("texBuff");
 
-	glm::mat4 view = glm::lookAt(	glm::vec3(0.0f, 0.0f, 3.0f), //Posição
-									glm::vec3(0.0f, 0.0f, 0.0f), //Target
-									glm::vec3(0.0f, 1.0f, 0.0f)  //UP
-								);
+	glm::mat4 view = glm::mat4(1);
+
+	view = glm::lookAt(cameraPos, // Posição (ponto) 
+		glm::vec3(0.0f, 0.0f, 0.0f), // Target (ponto, não vetor) -> dir = target - pos                
+		cameraUp);// Up (vetor)
 
 	GLint viewLoc = glGetUniformLocation(shader.ID, "view");
 	glUniformMatrix4fv(viewLoc, 1, FALSE, glm::value_ptr(view));
 
 	//glm::mat4 projection = glm::ortho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
-	glm::mat4 projection = glm::perspective(glm::radians(45.0f), (GLfloat)WIDTH / (GLfloat)HEIGHT, 1.0f, 100.0f);
+	glm::mat4 projection = glm::perspective(glm::radians(45.0f), (GLfloat)WIDTH / (GLfloat)HEIGHT, 0.1f, 100.0f);
 
 	GLint projLoc = glGetUniformLocation(shader.ID, "projection");
 	glUniformMatrix4fv(projLoc, 1, FALSE, glm::value_ptr(projection));
@@ -129,6 +140,7 @@ int main()
 
 		// Checa se houveram eventos de input (key pressed, mouse moved etc.) e chama as funções de callback correspondentes
 		glfwPollEvents();
+		updateCameraPos(window);
 
 		// Limpa o buffer de cor
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f); //cor de fundo
@@ -142,12 +154,12 @@ int main()
 		glm::mat4 model = glm::mat4(1); //matriz identidade
 
 		//Translação
-		float offsetZ = -2.0 + cos(glfwGetTime()) * 2.0f;
-		model = glm::translate(model, glm::vec3(0.0, 0.0, offsetZ));
+		//float offsetZ = -2.0 + cos(glfwGetTime()) * 2.0f;
+		//model = glm::translate(model, glm::vec3(0.0, 0.0, offsetZ));
 
 		//Rotação
-		float angle = glfwGetTime();		
-		model = glm::rotate(model, angle, glm::vec3(1.0, 1.0, 0.0));
+		//float angle = glfwGetTime();		
+		//model = glm::rotate(model, angle, glm::vec3(1.0, 1.0, 0.0));
 
 		//Escala
 		//model = glm::scale(model, glm::vec3(200.0,200.0,1.0));
@@ -156,11 +168,15 @@ int main()
 		GLint modelLoc = glGetUniformLocation(shader.ID, "model");
 		glUniformMatrix4fv(modelLoc, 1, FALSE, glm::value_ptr(model));
 
+		view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+		GLint viewLoc = glGetUniformLocation(shader.ID, "view");
+		glUniformMatrix4fv(viewLoc, 1, FALSE, glm::value_ptr(view));
+
 		glBindVertexArray(VAO); //Conectando ao buffer de geometria desejado
 		//glBindTexture(GL_TEXTURE_2D, texID); //Conectando ao buffer de textura desejado
 
 		// Chamada de desenho - drawcall
-		glDrawArrays(GL_TRIANGLES, 0, 36);		
+		glDrawArrays(GL_TRIANGLES, 0, 42);		
 
 		glBindVertexArray(0); //Desconectando o buffer de geometria
 
@@ -180,12 +196,47 @@ int main()
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-		glfwSetWindowShouldClose(window, GL_TRUE);
+		glfwSetWindowShouldClose(window, GL_TRUE);	
 }
 
 void mouse_callback(GLFWwindow* window, double mouse_x, double mouse_y)
 {
 	//cout << mouse_x << " " << mouse_y << endl;
+	if (firstMouse)
+	{
+		lastX = mouse_x;
+		lastY = mouse_y;
+		firstMouse = false;
+	}
+
+	float xoffset = mouse_x - lastX;
+	float yoffset = lastY - mouse_y;
+	lastX = mouse_x;
+	lastY = mouse_y;
+
+	float sensitivity = 0.05;
+	xoffset *= sensitivity;
+	yoffset *= sensitivity;
+
+	yaw += xoffset;   //rotação y
+	pitch += yoffset; //rotação x
+
+	if (pitch > 89.0f)
+		pitch = 89.0f;
+	if (pitch < -89.0f)
+		pitch = -89.0f;
+
+	glm::vec3 front;
+	front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+	front.y = sin(glm::radians(pitch));
+	front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+	cameraFront = glm::normalize(front);
+
+	//Precisamos também atualizar o cameraUp!! Pra isso, usamos o Up do  
+	//mundo (y), recalculamos Right e depois o Up
+	glm::vec3 right = glm::normalize(glm::cross(cameraFront,
+		glm::vec3(0.0, 1.0, 0.0)));
+	cameraUp = glm::normalize(glm::cross(right, cameraFront));
 }
 
 
@@ -303,7 +354,15 @@ int setup3DGeometry()
 		//Triangulo 8
 		 0.5, 0.5,  0.5, 0.0, 1.0, 1.0,
 		 0.5,-0.5, -0.5, 0.0, 1.0, 1.0,
-		 0.5, 0.5, -0.5, 0.0, 1.0, 1.0 };
+		 0.5, 0.5, -0.5, 0.0, 1.0, 1.0,
+		//Chão
+		-10.0, -0.5, -10.0, 0.5, 0.5, 0.5,
+		-10.0, -0.5,  10.0, 0.5, 0.5, 0.5,
+		 10.0, -0.5, -10.0, 0.5, 0.5, 0.5,
+		-10.0, -0.5,  10.0, 0.5, 0.5, 0.5,
+		 10.0, -0.5,  10.0, 0.5, 0.5, 0.5,
+		 10.0, -0.5, -10.0, 0.5, 0.5, 0.5
+	};
 
 	GLuint VBO, VAO;
 
@@ -389,5 +448,22 @@ int setupTexture(string texName, int& width, int& height)
 	}
 
 	return texID;
+}
+
+void updateCameraPos(GLFWwindow* window)
+{
+	float cameraSpeed = 0.05f; // adjust accordingly
+
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+		cameraPos += cameraSpeed * cameraFront;
+
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		cameraPos -= cameraSpeed * cameraFront;
+
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
 }
 
