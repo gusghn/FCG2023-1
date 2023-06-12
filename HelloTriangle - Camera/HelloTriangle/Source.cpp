@@ -52,6 +52,9 @@ bool firstMouse = true;
 float lastX = WIDTH / 2.0, lastY = HEIGHT / 2.0; //para calcular o quanto que o mouse deslocou
 float yaw = -90.0, pitch = 0.0; //rotação em x e y
 
+int voxelmap[5][5][5];
+glm::vec3 gridCursor = glm::vec3(0, 0, 0);
+
 // Função MAIN
 int main()
 {
@@ -129,6 +132,14 @@ int main()
 
 	glEnable(GL_DEPTH_TEST);
 
+	for (int x = 0; x < 5; x++)
+		for (int y = 0; y < 5; y++)
+			for (int z = 0; z < 5; z++)			
+				voxelmap[x][y][z] = 0;
+
+	glm::vec3 voxelDimensions = glm::vec3(1.0, 1.0, 1.0);
+	glm::vec3 initialPos = glm::vec3(0.0, 0.0, 0.0);
+
 	// Loop da aplicação - "game loop"
 	while (!glfwWindowShouldClose(window))
 	{
@@ -150,8 +161,6 @@ int main()
 		glPointSize(20);
 
 
-		//Matriz de modelo: transformações no objeto
-		glm::mat4 model = glm::mat4(1); //matriz identidade
 
 		//Translação
 		//float offsetZ = -2.0 + cos(glfwGetTime()) * 2.0f;
@@ -164,10 +173,6 @@ int main()
 		//Escala
 		//model = glm::scale(model, glm::vec3(200.0,200.0,1.0));
 
-		//Enviando a matriz de modelo para o shader
-		GLint modelLoc = glGetUniformLocation(shader.ID, "model");
-		glUniformMatrix4fv(modelLoc, 1, FALSE, glm::value_ptr(model));
-
 		view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 		GLint viewLoc = glGetUniformLocation(shader.ID, "view");
 		glUniformMatrix4fv(viewLoc, 1, FALSE, glm::value_ptr(view));
@@ -175,8 +180,43 @@ int main()
 		glBindVertexArray(VAO); //Conectando ao buffer de geometria desejado
 		//glBindTexture(GL_TEXTURE_2D, texID); //Conectando ao buffer de textura desejado
 
-		// Chamada de desenho - drawcall
-		glDrawArrays(GL_TRIANGLES, 0, 42);		
+		//Matriz de modelo: transformações no objeto
+		glm::mat4 model = glm::mat4(1); //matriz identidade
+
+		for (int x = 0; x < 5; x++)
+			for (int y = 0; y < 5; y++)
+				for (int z = 0; z < 5; z++)
+				{
+					bool voxel = voxelmap[x][y][z];
+
+					if (voxel) 
+					{
+						//alterar a posição do voxel
+						model = glm::mat4(1); //matriz identidade
+
+						glm::vec3 pos;
+						pos.x = initialPos.x + x * voxelDimensions.x;
+						pos.y = initialPos.y + y * voxelDimensions.y;
+						pos.z = initialPos.z + z * voxelDimensions.z;
+
+						model = glm::translate(model, glm::vec3(pos.x, pos.y, pos.z));
+
+						//Enviando a matriz de modelo para o shader
+						GLint modelLoc = glGetUniformLocation(shader.ID, "model");
+						glUniformMatrix4fv(modelLoc, 1, FALSE, glm::value_ptr(model));
+
+						//Chamada de desenho
+						glDrawArrays(GL_TRIANGLES, 0, 36);
+					}
+				};
+
+		model = glm::mat4(1);
+		//Enviando a matriz de modelo para o shader
+		GLint modelLoc = glGetUniformLocation(shader.ID, "model");
+		glUniformMatrix4fv(modelLoc, 1, FALSE, glm::value_ptr(model));
+
+		// Desenha o chão
+		glDrawArrays(GL_TRIANGLES, 36, 6);		
 
 		glBindVertexArray(0); //Desconectando o buffer de geometria
 
@@ -196,7 +236,39 @@ int main()
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-		glfwSetWindowShouldClose(window, GL_TRUE);	
+		glfwSetWindowShouldClose(window, GL_TRUE);
+
+	if (key == GLFW_KEY_UP && action == GLFW_PRESS)
+	{
+		gridCursor.z = ((int)gridCursor.z + 1) % 5;
+	}
+	if (key == GLFW_KEY_DOWN && action == GLFW_PRESS)
+	{
+		gridCursor.z = ((int)gridCursor.z - 1 + 5) % 5;
+	}
+
+	if (key == GLFW_KEY_RIGHT && action == GLFW_PRESS)
+	{
+		gridCursor.x = ((int)gridCursor.x + 1) % 5;
+	}
+	if (key == GLFW_KEY_LEFT && action == GLFW_PRESS)
+	{
+		gridCursor.x = ((int)gridCursor.x - 1 + 5) % 5;
+	}
+	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+	{
+		voxelmap[(int)gridCursor.x][(int)gridCursor.y][(int)gridCursor.z] = 1;
+	}
+
+	if (key == GLFW_KEY_I && action == GLFW_PRESS)
+	{
+		gridCursor.y = ((int)gridCursor.y + 1) % 5;
+	}
+	if (key == GLFW_KEY_K && action == GLFW_PRESS)
+	{
+		gridCursor.y = ((int)gridCursor.y - 1 + 5) % 5;
+	}
+	cout << (int)gridCursor.x << " " << (int)gridCursor.y << " " << (int)gridCursor.z << endl;
 }
 
 void mouse_callback(GLFWwindow* window, double mouse_x, double mouse_y)
