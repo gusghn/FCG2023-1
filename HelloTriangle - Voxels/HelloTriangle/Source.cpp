@@ -49,7 +49,7 @@ void save(string fileName);
 void open(string fileName);
 
 // Dimensões da janela (pode ser alterado em tempo de execução)
-const GLuint WIDTH = 800, HEIGHT = 600;
+const GLuint WIDTH = 1000, HEIGHT = 800;
 
 //Variáveis de controle da câmera
 glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 5.0f);
@@ -67,7 +67,7 @@ glm::vec3 gridCursor = glm::vec3(0, 0, 0);
 vector <glm::vec3> colorPalette;
 int iColor = 0;
 
-enum colorNames {VERMELHO, VERDE, AZUL, AMARELO, MAGENTA, CIANO, PRETO, BRANCO, NONE = -1};
+enum colorNames {VERMELHO, VERDE, AZUL, AMARELO, MAGENTA, CIANO, PRETO, BRANCO, LARANJA, ROXO, NONE = -1};
 
 
 bool topview = false;
@@ -93,7 +93,7 @@ int main()
 //#endif
 
 	// Criação da janela GLFW
-	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Ola Voxels!", nullptr, nullptr);
+	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Trabalho Grau B", nullptr, nullptr);
 	glfwMakeContextCurrent(window);
 
 	// Fazendo o registro da função de callback para a janela GLFW
@@ -181,7 +181,7 @@ int main()
 		updateCameraPos(window);
 
 		// Limpa o buffer de cor
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f); //cor de fundo
+		glClearColor(0.3f, 0.3f, 0.3f, 1.0f); //cor de fundo
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glLineWidth(10);
@@ -258,7 +258,7 @@ int main()
 
 
 				//Desenho do cursor
-				shader.setVec4("inputColor", 1.0, 1.0, 0.0, 0.7);
+				shader.setVec4("inputColor", 0.7f, 0.7f, 0.7f, 0.7f);
 				model = glm::mat4(1);
 
 				glm::vec3 pos;
@@ -326,7 +326,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		gridCursor.y = ((int)gridCursor.y - 1 + 5) % 5;
 	}
 
-	if (key >= GLFW_KEY_0 && key <= GLFW_KEY_7 && action == GLFW_PRESS)
+	if (key >= GLFW_KEY_0 && key <= GLFW_KEY_9 && action == GLFW_PRESS)
 	{
 
 		iColor = key - 48;
@@ -823,6 +823,9 @@ void setupColorPalette()
 	colorPalette.push_back(glm::vec3(0.0, 1.0, 1.0)); //ciano 5
 	colorPalette.push_back(glm::vec3(0.0, 0.0, 0.0)); //preto 6
 	colorPalette.push_back(glm::vec3(1.0, 1.0, 1.0)); //branco 7
+	colorPalette.push_back(glm::vec3(1.0, 0.5, 0.0)); //laranja 8
+	colorPalette.push_back(glm::vec3(0.5, 0.1, 0.5)); //roxo 9
+	//colorPalette.push_back(glm::vec3(0.7, 1.0, 0.0)); //verdeLimao10
 }
 
 void save(string fileName)
